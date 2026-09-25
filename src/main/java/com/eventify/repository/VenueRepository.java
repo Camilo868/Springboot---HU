@@ -1,24 +1,13 @@
 package com.eventify.repository;
 
 import com.eventify.model.Venue;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Repository
-public class VenueRepository {
+public interface VenueRepository extends JpaRepository<Venue, Long> {
 
-    private final List<Venue> venues = new ArrayList<>();
-    private Long idCounter = 1L;
-
-    public Venue save(Venue venue) {
-        venue.setId(idCounter++);
-        venues.add(venue);
-        return venue;
-    }
-
-    public List<Venue> findAll() {
-        return venues;
-    }
+    Page <Venue> findByNombreContaining(String nombre, Pageable pageable);
 }

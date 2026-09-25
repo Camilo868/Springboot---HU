@@ -1,24 +1,13 @@
 package com.eventify.repository;
 
 import com.eventify.model.Event;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Repository
-public class EventRepository {
+public interface EventRepository extends JpaRepository<Event, Long> {
 
-    private final List<Event> events = new ArrayList<>();
-    private Long idCounter = 1L;
-
-    public Event save(Event event) {
-        event.setId(idCounter++);
-        events.add(event);
-        return event;
-    }
-
-    public List<Event> findAll() {
-        return events;
-    }
+    Page< Event > findByNombreContaining (String nombre, Pageable pageable);
 }

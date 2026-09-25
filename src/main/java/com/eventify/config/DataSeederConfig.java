@@ -1,3 +1,4 @@
+/*
 package com.eventify.config;
 
 import com.eventify.model.Event;
@@ -21,3 +22,4 @@ public class DataSeederConfig {
         return true;
     }
 }
+*/

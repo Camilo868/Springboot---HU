@@ -1,19 +1,24 @@
 package com.eventify.service;
 
-import com.eventify.exception.InvalidDataException;
+import com.eventify.exception.*;
 import com.eventify.model.Event;
 import com.eventify.repository.EventRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,62 +30,97 @@ class EventServiceTest {
     @InjectMocks
     private EventService eventService;
 
-    private Event validEvent;
-
-    @BeforeEach
-    void setUp() {
-        validEvent = new Event(null, "Conferencia Java", "2026-10-10", "Charla técnica de backend");
-    }
-
+    // --- TEST: Crear (save) ---
     @Test
-    void save_ValidEvent_ReturnsSavedEvent() {
-        // Arrange (Preparar)
-        Event savedMock = new Event(1L, "Conferencia Java", "2026-10-10", "Charla técnica de backend");
-        when(eventRepository.save(validEvent)).thenReturn(savedMock);
+    void shouldSaveEventSuccessfully() {
+        Event newEvent = new Event(null, "Conferencia Tech", LocalDate.now(), "Evento anual");
+        Event savedEvent = new Event(1L, "Conferencia Tech", LocalDate.now(), "Evento anual");
 
-        // Act (Actuar)
-        Event result = eventService.save(validEvent);
+        when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
 
-        // Assert (Verificar)
-        assertNotNull(result);
+        Event result = eventService.save(newEvent);
+
         assertEquals(1L, result.getId());
-        assertEquals("Conferencia Java", result.getNombre());
-        verify(eventRepository, times(1)).save(validEvent);
+        assertEquals("Conferencia Tech", result.getNombre());
+        verify(eventRepository, times(1)).save(newEvent);
     }
 
     @Test
-    void save_EmptyName_ThrowsInvalidDataException() {
-        // Arrange (Preparar)
-        Event invalidEvent = new Event(null, "   ", "2026-10-10", "Descripción");
+    void shouldThrowInvalidDataExceptionWhenNameIsEmpty() {
+        Event invalidEvent = new Event(null, "", LocalDate.now(), "Sin nombre");
 
-        // Act & Assert (Actuar y Verificar)
-        assertThrows(InvalidDataException.class, () -> eventService.save(invalidEvent));
+        InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
+            eventService.save(invalidEvent);
+        });
+
+        assertEquals("El nombre del evento no puede estar vacío", exception.getMessage());
         verify(eventRepository, never()).save(any());
     }
 
+    // --- TEST: Leer por ID (findById) ---
     @Test
-    void save_NullName_ThrowsInvalidDataException() {
-        // Arrange (Preparar)
-        Event invalidEvent = new Event(null, null, "2026-10-10", "Descripción");
+    void shouldReturnEventWhenIdExists() {
+        Event mockEvent = new Event(1L, "Taller Java", LocalDate.now(), "Taller práctico");
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(mockEvent));
 
-        // Act & Assert (Actuar y Verificar)
-        assertThrows(InvalidDataException.class, () -> eventService.save(invalidEvent));
-        verify(eventRepository, never()).save(any());
-    }
+        Event result = eventService.findById(1L);
 
-    @Test
-    void findAll_ReturnsListOfEvents() {
-        // Arrange (Preparar)
-        List<Event> mockList = new ArrayList<>();
-        mockList.add(new Event(1L, "Evento 1", "2026-10-10", "Desc 1"));
-        when(eventRepository.findAll()).thenReturn(mockList);
-
-        // Act (Actuar)
-        List<Event> result = eventService.findAll();
-
-        // Assert (Verificar)
         assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(eventRepository, times(1)).findAll();
+        assertEquals("Taller Java", result.getNombre());
+    }
+
+    @Test
+    void shouldThrowResourceNotFoundExceptionWhenIdDoesNotExist() {
+        when(eventRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            eventService.findById(99L);
+        });
+
+        assertEquals("Evento no encontrado con ID: 99", exception.getMessage());
+    }
+
+    // --- TEST: Paginación (findAll) ---
+    @Test
+    void shouldReturnPagedEvents() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Event mockEvent = new Event(1L, "Hackathon", LocalDate.now(), "Competencia");
+        Page<Event> mockPage = new PageImpl<>(List.of(mockEvent));
+
+        when(eventRepository.findAll(pageable)).thenReturn(mockPage);
+
+        Page<Event> result = eventService.findAll(pageable);
+
+        assertEquals(1, result.getTotalElements());
+        verify(eventRepository, times(1)).findAll(pageable);
+    }
+
+    // --- TEST: Actualizar (update) ---
+    @Test
+    void shouldUpdateEventSuccessfully() {
+        Event existingEvent = new Event(1L, "Viejo Nombre", LocalDate.now(), "Vieja Desc");
+        Event updateData = new Event(null, "Nuevo Nombre", LocalDate.now(), "Nueva Desc");
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+        when(eventRepository.save(any(Event.class))).thenReturn(existingEvent);
+
+        Event result = eventService.update(1L, updateData);
+
+        assertEquals("Nuevo Nombre", result.getNombre());
+        assertEquals("Nueva Desc", result.getDescripcion());
+        verify(eventRepository, times(1)).save(existingEvent);
+    }
+
+    // --- TEST: Eliminar (delete) ---
+    @Test
+    void shouldDeleteEventSuccessfully() {
+        Event existingEvent = new Event(1L, "Concierto", LocalDate.now(), "Música");
+
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
+        doNothing().when(eventRepository).delete(existingEvent);
+
+        eventService.delete(1L);
+
+        verify(eventRepository, times(1)).delete(existingEvent);
     }
 }

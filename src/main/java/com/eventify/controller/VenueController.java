@@ -3,17 +3,17 @@ package com.eventify.controller;
 import com.eventify.model.Venue;
 import com.eventify.service.VenueService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/venues")
-@Tag(name = "Lugares", description = "Operaciones para registrar y consultar lugares (venues)")
-public class VenueController {
 
+public class VenueController {
     private final VenueService venueService;
 
     public VenueController(VenueService venueService) {
@@ -21,16 +21,33 @@ public class VenueController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Registrar un nuevo lugar", description = "Valida y almacena un lugar en memoria")
-    public Venue create(@RequestBody Venue venue) {
-        return venueService.save(venue);
+    @Operation(summary = "Registrar un nuevo lugar")
+    public ResponseEntity<Venue> create(@RequestBody Venue venue) {
+        return new ResponseEntity<>(venueService.save(venue), HttpStatus.CREATED);
     }
 
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Listar todos los lugares", description = "Retorna la colección completa de lugares registrados")
-    public List<Venue> getAll() {
-        return venueService.findAll();
+    @Operation(summary = "Consultar catálogo de lugares paginado")
+    public ResponseEntity<Page<Venue>> getAll(@ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(venueService.findAll(pageable));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Consultar un lugar por ID")
+    public ResponseEntity<Venue> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(venueService.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar un lugar existente")
+    public ResponseEntity<Venue> update(@PathVariable Long id, @RequestBody Venue venue) {
+        return ResponseEntity.ok(venueService.update(id, venue));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar un lugar")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        venueService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,17 +3,14 @@ package com.eventify.service;
 import com.eventify.exception.InvalidDataException;
 import com.eventify.model.Venue;
 import com.eventify.repository.VenueRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,52 +22,42 @@ class VenueServiceTest {
     @InjectMocks
     private VenueService venueService;
 
-    private Venue validVenue;
-
-    @BeforeEach
-    void setUp() {
-        validVenue = new Venue(null, "Auditorio Principal", "Calle 50 #20-10", 300);
-    }
-
     @Test
-    void save_ValidVenue_ReturnsSavedVenue() {
-        // Arrange (Preparar)
-        Venue savedMock = new Venue(1L, "Auditorio Principal", "Calle 50 #20-10", 300);
-        when(venueRepository.save(validVenue)).thenReturn(savedMock);
+    void shouldCreateVenueSuccessfully() {
+        Venue newVenue = new Venue(null, "Auditorio Principal", "Calle 123", 500);
+        Venue savedVenue = new Venue(1L, "Auditorio Principal", "Calle 123", 500);
 
-        // Act (Actuar)
-        Venue result = venueService.save(validVenue);
+        when(venueRepository.save(any(Venue.class))).thenReturn(savedVenue);
 
-        // Assert (Verificar)
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
+        Venue result = venueService.save(newVenue);
+
+        assertNotNull(result.getId());
         assertEquals("Auditorio Principal", result.getNombre());
-        verify(venueRepository, times(1)).save(validVenue);
+        assertEquals(500, result.getCapacidad());
+        verify(venueRepository, times(1)).save(newVenue);
     }
 
     @Test
-    void save_EmptyName_ThrowsInvalidDataException() {
-        // Arrange (Preparar)
-        Venue invalidVenue = new Venue(null, "", "Calle 50 #20-10", 300);
+    void shouldThrowExceptionWhenVenueNameIsNull() {
+        Venue invalidVenue = new Venue(null, null, "Calle 123", 500);
 
-        // Act & Assert (Actuar y Verificar)
-        assertThrows(InvalidDataException.class, () -> venueService.save(invalidVenue));
+        InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
+            venueService.save(invalidVenue);
+        });
+
+        assertEquals("El nombre del lugar no puede estar vacío", exception.getMessage());
         verify(venueRepository, never()).save(any());
     }
 
     @Test
-    void findAll_ReturnsListOfVenues() {
-        // Arrange (Preparar)
-        List<Venue> mockList = new ArrayList<>();
-        mockList.add(new Venue(1L, "Lugar A", "Dirección A", 100));
-        when(venueRepository.findAll()).thenReturn(mockList);
+    void shouldThrowExceptionWhenVenueNameIsEmpty() {
+        Venue invalidVenue = new Venue(null, "   ", "Calle 123", 500);
 
-        // Act (Actuar)
-        List<Venue> result = venueService.findAll();
+        InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
+            venueService.save(invalidVenue);
+        });
 
-        // Assert (Verificar)
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(venueRepository, times(1)).findAll();
+        assertEquals("El nombre del lugar no puede estar vacío", exception.getMessage());
+        verify(venueRepository, never()).save(any());
     }
 }
