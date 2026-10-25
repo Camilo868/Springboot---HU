@@ -43,12 +43,20 @@
                                 <div class="form-text">Máximo 200 caracteres. Campo obligatorio.</div>
                             </div>
 
+                            <!-- Ciudad (Obligatorio) -->
+                            <div class="mb-3">
+                                <label for="ciudad" class="form-label fw-semibold">Ciudad <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ciudad" th:field="*{ciudad}"
+                                       placeholder="Ej: Bogotá, Medellín, Cali..." required maxlength="100">
+                                <div class="form-text">Ubicación geográfica para segmentación de eventos.</div>
+                            </div>
+
                             <!-- Dirección -->
                             <div class="mb-3">
                                 <label for="direccion" class="form-label fw-semibold">Dirección <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="direccion" th:field="*{direccion}"
                                        placeholder="Ej: Carrera 7 # 45-10" required maxlength="100">
-                                <div class="form-text">Ubicación del recinto. Campo obligatorio.</div>
+                                <div class="form-text">Dirección exacta del recinto. Campo obligatorio.</div>
                             </div>
 
                             <!-- Capacidad -->

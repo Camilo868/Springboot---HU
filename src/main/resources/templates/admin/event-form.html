@@ -28,11 +28,11 @@
                         <h1 class="h4 mb-0 fw-bold text-primary">
                             <i class="bi bi-calendar-plus me-2"></i>Registrar Nuevo Evento
                         </h1>
-                        <p class="text-muted small mb-0 mt-1">Completa los campos para dar de alta un evento en el catálogo.</p>
+                        <p class="text-muted small mb-0 mt-1">Completa los campos para dar de alta un evento con sede y categorías.</p>
                     </div>
                     <div class="card-body p-4">
 
-                        <!-- Formulario con th:action y th:object -->
+                        <!-- Formulario Relacional con th:action y th:object -->
                         <form th:action="@{/admin/events}" th:object="${event}" method="post">
 
                             <!-- Nombre del Evento -->
@@ -50,11 +50,48 @@
                                 <div class="form-text">Selecciona la fecha en la que tendrá lugar el evento.</div>
                             </div>
 
+                            <!-- Relación Many-to-One obligatoria con Sede (Venue) -->
+                            <div class="mb-3">
+                                <label for="venueId" class="form-label fw-semibold">Sede / Recinto Físico <span class="text-danger">*</span></label>
+                                <select class="form-select" id="venueId" name="venueId" required>
+                                    <option value="" disabled selected>-- Selecciona una sede --</option>
+                                    <option th:each="v : ${venues}"
+                                            th:value="${v.id}"
+                                            th:text="${v.nombre + ' (' + v.ciudad + ' - Aforo: ' + v.capacidad + ' personas)'}">
+                                        Movistar Arena (Bogotá - Aforo: 14000)
+                                    </option>
+                                </select>
+                                <div class="form-text">Todo evento debe estar vinculado obligatoriamente a una sede física.</div>
+                            </div>
+
+                            <!-- Relación Many-to-Many con Categorías (Checkboxes) -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold d-block">Categorías Temáticas</label>
+                                <div class="border rounded p-3 bg-light">
+                                    <div class="row g-2">
+                                        <div class="col-sm-6" th:each="cat : ${allCategories}">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="categoryIds"
+                                                       th:value="${cat.id}"
+                                                       th:id="${'cat_' + cat.id}">
+                                                <label class="form-check-label fw-medium"
+                                                       th:for="${'cat_' + cat.id}"
+                                                       th:text="${cat.nombre}">
+                                                    Tecnología
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">Puedes seleccionar una o más categorías para clasificar el evento.</div>
+                            </div>
+
                             <!-- Descripción -->
                             <div class="mb-4">
                                 <label for="descripcion" class="form-label fw-semibold">Descripción</label>
                                 <textarea class="form-control" id="descripcion" th:field="*{descripcion}"
-                                          rows="4" placeholder="Detalles, objetivos, audiencia recomendada..." maxlength="450"></textarea>
+                                          rows="3" placeholder="Detalles, objetivos, audiencia recomendada..." maxlength="450"></textarea>
                                 <div class="form-text">Máximo 450 caracteres. Opcional.</div>
                             </div>
 

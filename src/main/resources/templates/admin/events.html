@@ -14,7 +14,7 @@
 
     <main class="container my-4 flex-grow-1">
 
-        <!-- Mensaje de confirmación visual (Flash attribute tras redirección) -->
+        <!-- Mensajes de confirmación visual (Flash attributes) -->
         <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>
             <span th:text="${successMessage}">Acción completada con éxito.</span>
@@ -30,8 +30,8 @@
         <!-- Encabezado del Panel -->
         <div class="row align-items-center mb-4">
             <div class="col-md-7">
-                <h1 class="h2 fw-bold text-dark">Panel de Control de Eventos y Lugares</h1>
-                <p class="text-muted mb-0">Gestión centralizada del catálogo y recintos disponibles en la plataforma.</p>
+                <h1 class="h2 fw-bold text-dark">Panel de Control de Eventos</h1>
+                <p class="text-muted mb-0">Gestión de eventos interconectados con sedes y categorías.</p>
             </div>
             <div class="col-md-5 text-md-end mt-3 mt-md-0">
                 <a th:href="@{/admin/events/new}" class="btn btn-primary me-2 shadow-sm">
@@ -43,13 +43,45 @@
             </div>
         </div>
 
-        <!-- SECCIÓN: CATÁLOGO DE EVENTOS -->
+        <!-- MOTOR DE BÚSQUEDA Y FILTRADO PERSISTENTE -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body bg-white p-3">
+                <form th:action="@{/admin/events}" method="get" class="row g-2 align-items-center">
+                    <div class="col-md-5">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-geo-alt"></i></span>
+                            <input type="text" name="ciudad" class="form-control" placeholder="Filtrar por ciudad (ej. bog, Medellín)..."
+                                   th:value="${currentCiudad}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-tag"></i></span>
+                            <input type="text" name="categoria" class="form-control" placeholder="Filtrar por categoría (ej. rock, Talleres)..."
+                                   th:value="${currentCategoria}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search me-1"></i>Buscar
+                        </button>
+                        <a th:href="@{/admin/events}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: CATÁLOGO DE EVENTOS (PROYECCIÓN DTO CON SLICE) -->
         <section class="card shadow-sm mb-5 border-0">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
                 <h2 class="h5 mb-0 fw-semibold text-primary">
-                    <i class="bi bi-calendar-event me-2"></i>Catálogo de Eventos
+                    <i class="bi bi-calendar-event me-2"></i>Catálogo de Eventos (Página <span th:text="${currentPage + 1}">1</span>)
                 </h2>
-                <span class="badge bg-primary rounded-pill" th:text="${#lists.size(events)} + ' eventos'">0 eventos</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>Optimizado con Records & Slice
+                </span>
             </div>
             <div class="card-body">
                 <!-- Caso borde: Catálogo vacío (th:if) -->
@@ -57,7 +89,7 @@
                     <i class="bi bi-info-circle-fill fs-4 me-3"></i>
                     <div>
                         <strong class="d-block">Actualmente no hay eventos programados</strong>
-                        <span>Comienza registrando un nuevo evento utilizando el botón superior.</span>
+                        <span>No se encontraron eventos con los criterios de búsqueda aplicados.</span>
                     </div>
                 </div>
 
@@ -66,9 +98,11 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col" style="width: 80px;">ID</th>
+                                <th scope="col" style="width: 70px;">ID</th>
                                 <th scope="col">Nombre del Evento</th>
-                                <th scope="col" style="width: 150px;">Fecha</th>
+                                <th scope="col" style="width: 130px;">Fecha</th>
+                                <th scope="col">Sede / Recinto</th>
+                                <th scope="col">Ciudad</th>
                                 <th scope="col">Descripción</th>
                             </tr>
                         </thead>
@@ -80,58 +114,46 @@
                                 <td>
                                     <span class="badge bg-light text-dark border" th:text="${event.fecha}">2026-10-15</span>
                                 </td>
-                                <td class="text-secondary" th:text="${event.descripcion}">Encuentro anual de desarrollo</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN: CATÁLOGO DE LUGARES (VENUES) -->
-        <section class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
-                <h2 class="h5 mb-0 fw-semibold text-success">
-                    <i class="bi bi-building me-2"></i>Catálogo de Lugares (Venues)
-                </h2>
-                <span class="badge bg-success rounded-pill" th:text="${#lists.size(venues)} + ' lugares'">0 lugares</span>
-            </div>
-            <div class="card-body">
-                <!-- Caso borde: Catálogo de lugares vacío (th:if) -->
-                <div th:if="${#lists.isEmpty(venues)}" class="alert alert-info d-flex align-items-center mb-0" role="alert">
-                    <i class="bi bi-info-circle-fill fs-4 me-3"></i>
-                    <div>
-                        <strong class="d-block">Actualmente no hay lugares registrados</strong>
-                        <span>Registra el primer recinto para asociarlo a tus eventos.</span>
-                    </div>
-                </div>
-
-                <!-- Caso exitoso: Tabla con lista de lugares (th:unless) -->
-                <div th:unless="${#lists.isEmpty(venues)}" class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th scope="col" style="width: 80px;">ID</th>
-                                <th scope="col">Nombre del Recinto</th>
-                                <th scope="col">Dirección</th>
-                                <th scope="col" style="width: 140px;">Capacidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Iteración con th:each y renderizado con th:text -->
-                            <tr th:each="venue : ${venues}">
-                                <td class="fw-bold text-muted" th:text="${venue.id}">1</td>
-                                <td class="fw-semibold text-dark" th:text="${venue.nombre}">Auditorio Principal</td>
-                                <td class="text-secondary" th:text="${venue.direccion}">Av. Innovación 123</td>
                                 <td>
-                                    <span class="badge bg-secondary-subtle text-dark border">
-                                        <i class="bi bi-people me-1"></i>
-                                        <span th:text="${venue.capacidad} + ' personas'">500 personas</span>
-                                    </span>
+                                    <i class="bi bi-building text-secondary me-1"></i>
+                                    <span class="fw-medium text-secondary" th:text="${event.nombreLugar}">Movistar Arena</span>
                                 </td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-dark border border-info-subtle" th:text="${event.ciudad}">Bogotá</span>
+                                </td>
+                                <td class="text-secondary small" th:text="${event.descripcion}">Encuentro anual de desarrollo</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- NAVEGACIÓN INTELIGENTE Y PERSISTENTE CON SLICE (ANTERIOR / SIGUIENTE) -->
+            <div class="card-footer bg-white py-3 border-top d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    Navegando página <strong th:text="${currentPage + 1}">1</strong>
+                </span>
+
+                <div class="btn-group" role="group">
+                    <!-- Botón Anterior: deshabilitado si no hay página anterior -->
+                    <a th:if="${eventsSlice != null and eventsSlice.hasPrevious()}"
+                       th:href="@{/admin/events(page=${currentPage - 1}, ciudad=${currentCiudad}, categoria=${currentCategoria})}"
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-chevron-left me-1"></i>Anterior
+                    </a>
+                    <button th:unless="${eventsSlice != null and eventsSlice.hasPrevious()}" class="btn btn-outline-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left me-1"></i>Anterior
+                    </button>
+
+                    <!-- Botón Siguiente: deshabilitado si no hay más datos -->
+                    <a th:if="${eventsSlice != null and eventsSlice.hasNext()}"
+                       th:href="@{/admin/events(page=${currentPage + 1}, ciudad=${currentCiudad}, categoria=${currentCategoria})}"
+                       class="btn btn-outline-primary btn-sm">
+                        Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                    <button th:unless="${eventsSlice != null and eventsSlice.hasNext()}" class="btn btn-outline-secondary btn-sm" disabled>
+                        Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                    </button>
                 </div>
             </div>
         </section>

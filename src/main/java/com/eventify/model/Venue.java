@@ -3,10 +3,9 @@ package com.eventify.model;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 @Data
 @Entity
-@Table(name="venues")
+@Table(name = "venues")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Venue {
@@ -20,6 +19,9 @@ public class Venue {
 
     @Column(length = 100, nullable = false)
     private String direccion;
+
+    @Column(length = 100, nullable = false)
+    private String ciudad;
 
     @Column(nullable = false)
     private Integer capacidad;

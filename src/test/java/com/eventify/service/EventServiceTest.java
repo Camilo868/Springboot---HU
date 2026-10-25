@@ -1,8 +1,11 @@
 package com.eventify.service;
 
+import com.eventify.dto.EventSummaryDTO;
 import com.eventify.exception.*;
 import com.eventify.model.Event;
+import com.eventify.model.Venue;
 import com.eventify.repository.EventRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +15,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,11 +35,18 @@ class EventServiceTest {
     @InjectMocks
     private EventService eventService;
 
+    private Venue defaultVenue;
+
+    @BeforeEach
+    void setUp() {
+        defaultVenue = new Venue(1L, "Movistar Arena", "Diag 61c", "Bogotá", 14000);
+    }
+
     // --- TEST: Crear (save) ---
     @Test
     void shouldSaveEventSuccessfully() {
-        Event newEvent = new Event(null, "Conferencia Tech", LocalDate.now(), "Evento anual");
-        Event savedEvent = new Event(1L, "Conferencia Tech", LocalDate.now(), "Evento anual");
+        Event newEvent = new Event(null, "Conferencia Tech", LocalDate.now(), "Evento anual", defaultVenue);
+        Event savedEvent = new Event(1L, "Conferencia Tech", LocalDate.now(), "Evento anual", defaultVenue);
 
         when(eventRepository.save(any(Event.class))).thenReturn(savedEvent);
 
@@ -42,12 +54,13 @@ class EventServiceTest {
 
         assertEquals(1L, result.getId());
         assertEquals("Conferencia Tech", result.getNombre());
+        assertEquals("Bogotá", result.getVenue().getCiudad());
         verify(eventRepository, times(1)).save(newEvent);
     }
 
     @Test
     void shouldThrowInvalidDataExceptionWhenNameIsEmpty() {
-        Event invalidEvent = new Event(null, "", LocalDate.now(), "Sin nombre");
+        Event invalidEvent = new Event(null, "", LocalDate.now(), "Sin nombre", defaultVenue);
 
         InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
             eventService.save(invalidEvent);
@@ -57,10 +70,22 @@ class EventServiceTest {
         verify(eventRepository, never()).save(any());
     }
 
+    @Test
+    void shouldThrowInvalidDataExceptionWhenVenueIsNull() {
+        Event invalidEvent = new Event(null, "Conferencia Tech", LocalDate.now(), "Sin lugar", null);
+
+        InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
+            eventService.save(invalidEvent);
+        });
+
+        assertEquals("El evento debe tener un lugar asignado obligatoriamente", exception.getMessage());
+        verify(eventRepository, never()).save(any());
+    }
+
     // --- TEST: Leer por ID (findById) ---
     @Test
     void shouldReturnEventWhenIdExists() {
-        Event mockEvent = new Event(1L, "Taller Java", LocalDate.now(), "Taller práctico");
+        Event mockEvent = new Event(1L, "Taller Java", LocalDate.now(), "Taller práctico", defaultVenue);
         when(eventRepository.findById(1L)).thenReturn(Optional.of(mockEvent));
 
         Event result = eventService.findById(1L);
@@ -84,7 +109,7 @@ class EventServiceTest {
     @Test
     void shouldReturnPagedEvents() {
         Pageable pageable = PageRequest.of(0, 10);
-        Event mockEvent = new Event(1L, "Hackathon", LocalDate.now(), "Competencia");
+        Event mockEvent = new Event(1L, "Hackathon", LocalDate.now(), "Competencia", defaultVenue);
         Page<Event> mockPage = new PageImpl<>(List.of(mockEvent));
 
         when(eventRepository.findAll(pageable)).thenReturn(mockPage);
@@ -95,11 +120,28 @@ class EventServiceTest {
         verify(eventRepository, times(1)).findAll(pageable);
     }
 
+    // --- TEST: Búsqueda con Slice y Record DTO ---
+    @Test
+    void shouldReturnFilteredSummarySlice() {
+        Pageable pageable = PageRequest.of(0, 10);
+        EventSummaryDTO dto = new EventSummaryDTO(1L, "Concierto Rock", LocalDate.now(), "Desc", "Movistar Arena", "Bogotá");
+        Slice<EventSummaryDTO> slice = new SliceImpl<>(List.of(dto));
+
+        when(eventRepository.findFilteredSummarySlice(eq("Bogotá"), eq("Rock"), any(), any(), eq(pageable)))
+                .thenReturn(slice);
+
+        Slice<EventSummaryDTO> result = eventService.findFilteredSummarySlice("Bogotá", "Rock", null, null, pageable);
+
+        assertEquals(1, result.getContent().size());
+        assertEquals("Bogotá", result.getContent().get(0).ciudad());
+        verify(eventRepository, times(1)).findFilteredSummarySlice(eq("Bogotá"), eq("Rock"), any(), any(), eq(pageable));
+    }
+
     // --- TEST: Actualizar (update) ---
     @Test
     void shouldUpdateEventSuccessfully() {
-        Event existingEvent = new Event(1L, "Viejo Nombre", LocalDate.now(), "Vieja Desc");
-        Event updateData = new Event(null, "Nuevo Nombre", LocalDate.now(), "Nueva Desc");
+        Event existingEvent = new Event(1L, "Viejo Nombre", LocalDate.now(), "Vieja Desc", defaultVenue);
+        Event updateData = new Event(null, "Nuevo Nombre", LocalDate.now(), "Nueva Desc", defaultVenue);
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
         when(eventRepository.save(any(Event.class))).thenReturn(existingEvent);
@@ -111,16 +153,19 @@ class EventServiceTest {
         verify(eventRepository, times(1)).save(existingEvent);
     }
 
-    // --- TEST: Eliminar (delete) ---
+    // --- TEST: Borrado Lógico (Soft Delete) ---
     @Test
-    void shouldDeleteEventSuccessfully() {
-        Event existingEvent = new Event(1L, "Concierto", LocalDate.now(), "Música");
+    void shouldSoftDeleteEventSuccessfully() {
+        Event existingEvent = new Event(1L, "Concierto", LocalDate.now(), "Música", defaultVenue);
+        existingEvent.setActivo(true);
 
         when(eventRepository.findById(1L)).thenReturn(Optional.of(existingEvent));
-        doNothing().when(eventRepository).delete(existingEvent);
+        when(eventRepository.save(any(Event.class))).thenReturn(existingEvent);
 
         eventService.delete(1L);
 
-        verify(eventRepository, times(1)).delete(existingEvent);
+        assertFalse(existingEvent.isActivo(), "El evento debe haber cambiado su estado a inactivo (Soft Delete)");
+        verify(eventRepository, times(1)).save(existingEvent);
+        verify(eventRepository, never()).delete(any());
     }
 }

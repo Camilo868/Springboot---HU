@@ -24,8 +24,8 @@ class VenueServiceTest {
 
     @Test
     void shouldCreateVenueSuccessfully() {
-        Venue newVenue = new Venue(null, "Auditorio Principal", "Calle 123", 500);
-        Venue savedVenue = new Venue(1L, "Auditorio Principal", "Calle 123", 500);
+        Venue newVenue = new Venue(null, "Auditorio Principal", "Calle 123", "Bogotá", 500);
+        Venue savedVenue = new Venue(1L, "Auditorio Principal", "Calle 123", "Bogotá", 500);
 
         when(venueRepository.save(any(Venue.class))).thenReturn(savedVenue);
 
@@ -33,13 +33,14 @@ class VenueServiceTest {
 
         assertNotNull(result.getId());
         assertEquals("Auditorio Principal", result.getNombre());
+        assertEquals("Bogotá", result.getCiudad());
         assertEquals(500, result.getCapacidad());
         verify(venueRepository, times(1)).save(newVenue);
     }
 
     @Test
     void shouldThrowExceptionWhenVenueNameIsNull() {
-        Venue invalidVenue = new Venue(null, null, "Calle 123", 500);
+        Venue invalidVenue = new Venue(null, null, "Calle 123", "Bogotá", 500);
 
         InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
             venueService.save(invalidVenue);
@@ -51,7 +52,7 @@ class VenueServiceTest {
 
     @Test
     void shouldThrowExceptionWhenVenueNameIsEmpty() {
-        Venue invalidVenue = new Venue(null, "   ", "Calle 123", 500);
+        Venue invalidVenue = new Venue(null, "   ", "Calle 123", "Bogotá", 500);
 
         InvalidDataException exception = assertThrows(InvalidDataException.class, () -> {
             venueService.save(invalidVenue);
