@@ -2,6 +2,8 @@ package com.eventify.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import java.time.LocalDate;
 
 @Entity
@@ -19,6 +21,7 @@ public class Event {
     private String nombre;
 
     @Column(nullable = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fecha;
 
     @Column(length = 450)

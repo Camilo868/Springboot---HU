@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Fragmento Navbar -->
+    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold" th:href="@{/admin/events}">
+                <i class="bi bi-calendar-event me-2"></i>Eventify Admin
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/events}">Panel Principal</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/events/new}">Nuevo Evento</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/venues/new}">Nuevo Lugar</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a th:href="@{/swagger-ui/index.html}" target="_blank" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-journal-code me-1"></i>Swagger API
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Fragmento Footer -->
+    <footer th:fragment="footer" class="bg-light text-center py-3 text-muted mt-5 border-top">
+        <div class="container">
+            <small>&copy; 2026 Eventify - Plataforma de Gestión de Eventos y Recintos.</small>
+        </div>
+    </footer>
+</body>
+</html>

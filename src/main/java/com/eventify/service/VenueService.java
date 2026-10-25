@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class VenueService {
 
@@ -22,6 +24,11 @@ public class VenueService {
             throw new InvalidDataException("El nombre del lugar no puede estar vacío");
         }
         return venueRepository.save(venue);
+    }
+
+    // Listar todos sin paginación (para panel administrativo)
+    public List<Venue> findAll() {
+        return venueRepository.findAll();
     }
 
     // Aqui Paginación
